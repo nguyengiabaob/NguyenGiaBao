@@ -1,0 +1,22 @@
+List out the computational inefficiencies and anti-patterns
+
+1. Unused children prop
+   - The children prop is extracted but never used within the component.
+2. Using any type
+   The getPriority function uses the any type for the blockchain parameter. which defeats the purpose of TypeScript's type safety.
+3. Redundant type casting
+   The function sortedBalances casts lhs and rhs to WalletBalance despite already knowing their type from the filter operation
+4. Improper use of useMem
+   useMemo is used for sortedBalances, but the dependency array includes prices, which isn't used within the sortedBalances. This can cause unnecessary recalculations.
+   5 Incorrect usage of filter and sort in useMemo
+   The filter condition always returns false due to incorrect logic, causing an empty list.
+
+Explanation of Improvements
+
+- Removed the unused children prop
+- Replaced any type with string for blockchain to maintain type safety.
+- Removed redundant type casting.
+- Removed unnecessary prices from the dependency array of useMemo.
+- Moved amount formatting to the correct mapping function.
+- Corrected the filter logic to accurately filter out balances.
+- Reduced repeated getPriority calculations by using consistent logic across operations.
