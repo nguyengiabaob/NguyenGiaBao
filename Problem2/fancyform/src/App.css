@@ -1,6 +1,29 @@
 #root {
- 
-  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  min-width: 250px;
+  /* margin: 0px 400px 0px 400px; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
   /* padding: 2rem; */
- text-align: center;
+  text-align: center;
+}
+.full-w {
+  width: 100%;
+}
+.full-h {
+  height: 100%;
+}
+.flex {
+  display: flex;
+}
+.align-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.font-bold {
+  font-weight: 500;
 }

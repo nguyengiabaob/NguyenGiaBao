@@ -1,64 +1,90 @@
-import React, { useState } from "react";
-import { Button, Form, InputNumber, message, Select } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Row,
+  Select,
+  Space,
+} from "antd";
 import { useForm } from "antd/es/form/Form";
 import "./FormCustom.scss";
-const locale = window.navigator.language || "de-DE";
-import currencyList from "../until/currencyList";
+import { ObjectToArray, ObjValue } from "../until/genralFunction";
+import { SwapOutlined } from "@ant-design/icons";
+interface ResultForm {
+  send: number;
+  receive: string;
+}
 const FormCustom = () => {
-  const currencyOptions = currencyList.data.map((c) => ({
-    label: c.CcyNm,
-    value: `${c.CtryNm}::${c.Ccy}`,
-  }));
   const [form] = useForm();
-  const [currency, setCurrency] = useState<any>(currencyOptions[0].value);
+  const [currencies, setCurrencies] = useState<ObjValue[]>([]);
+  const [fromCurrency, setFromCurrency] = useState<string>("USD");
+  const [ToCurrency, setToCurrency] = useState<string>("USD");
+  const [amountRecive, setAmountRecive] = useState<string>();
   // const validateForm = () => {};
-  const onFinish = (value: string) => {
-    console.log("sadasd", value);
-
-    message.success("Success");
+  const onFinish = (value: ResultForm) => {
+    message.loading({
+      content: "Loading...",
+    });
+    swapCurrency(fromCurrency, ToCurrency, value.send);
   };
-  const currencyFormatter =
-    (selectedCurrOpt: string) => (value: number | bigint) => {
-      return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: selectedCurrOpt.split("::")[1],
-      }).format(value);
-    };
-  const currencyParser = (val: any) => {
+
+  const getCurrencies = async () => {
     try {
-      // for when the input gets clears
-      if (typeof val === "string" && !val.length) {
-        val = "0.0";
-      }
+      const res = await fetch("https://api.frankfurter.dev/v1/currencies");
+      const data = await res.json();
+      const formatData = ObjectToArray<object>(data);
 
-      // detecting and parsing between comma and dot
-      const group = new Intl.NumberFormat(locale)
-        .format(1111)
-        .replace(/1/g, "");
-      const decimal = new Intl.NumberFormat(locale)
-        .format(1.1)
-        .replace(/1/g, "");
-      let reversedVal = val.replace(new RegExp("\\" + group, "g"), "");
-      reversedVal = reversedVal.replace(new RegExp("\\" + decimal, "g"), ".");
-      //  => 1232.21 €
-
-      // removing everything except the digits and dot
-      reversedVal = reversedVal.replace(/[^0-9.]/g, "");
-      //  => 1232.21
-
-      // appending digits properly
-      const digitsAfterDecimalCount = (reversedVal.split(".")[1] || []).length;
-      const needsDigitsAppended = digitsAfterDecimalCount > 2;
-
-      if (needsDigitsAppended) {
-        reversedVal = reversedVal * Math.pow(10, digitsAfterDecimalCount - 2);
-      }
-
-      return Number.isNaN(reversedVal) ? 0 : reversedVal;
+      setCurrencies(formatData);
     } catch (error) {
-      console.error(error);
+      message.error({ content: `Error Fetching ${error}` });
     }
   };
+  const swapCurrency = (from: string, to: string, amount: number) => {
+    try {
+      if (from === to) {
+        console.log(
+          "Dsadsad",
+          amount.toString()?.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        );
+
+        form.setFieldValue(
+          "receive",
+          amount.toString()?.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        );
+        message.destroy();
+        message.success("Success");
+      }
+      fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`)
+        .then((resp) => resp.json())
+        .then((data) => {
+          const convertedAmount =
+            (amount * data.rates[to])
+              ?.toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            " " +
+            to;
+          // setAmountRecive(convertedAmount);
+          console.log("dsadsad", convertedAmount);
+
+          form.setFieldValue("receive", convertedAmount);
+          message.destroy();
+          message.success("Success");
+        });
+    } catch (error) {
+      message.destroy();
+      message.error({
+        content: "Error , Try do it again",
+      });
+    }
+  };
+
+  useEffect(() => {
+    getCurrencies();
+  }, []);
 
   return (
     <Form
@@ -66,41 +92,102 @@ const FormCustom = () => {
       layout="vertical"
       onFinish={onFinish}
       form={form}
+      onValuesChange={(changedValues: ResultForm, values: ResultForm) => {
+        if (!values.send) form.setFieldValue("receive", "");
+        // if (changedValues.send )
+        // console.log(changedValues, values);
+      }}
       title="Swap"
     >
       <h1>Swap</h1>
 
-      <Select
-        showSearch
-        value={currency}
-        style={{ width: "100%", marginTop: "1rem" }}
-        onChange={setCurrency}
+      <Row style={{ marginBottom: 8, rowGap: 8 }}>
+        <Col lg={8} md={24} sm={24} xs={24}>
+          <Space className="full-w" direction="vertical">
+            <span className="font-bold">From</span>
+            <Select
+              className="select-currency"
+              showSearch
+              value={fromCurrency}
+              style={{ width: "100%" }}
+              onChange={setFromCurrency}
+            >
+              {currencies?.map((currency) => (
+                <Select.Option key={currency.key} value={currency.key}>
+                  {currency.key}
+                </Select.Option>
+              ))}
+            </Select>
+          </Space>
+        </Col>
+
+        <Col
+          lg={8}
+          md={24}
+          sm={24}
+          xs={24}
+          className="flex align-center justify-center"
+        >
+          <SwapOutlined style={{ marginTop: 22 }} />
+        </Col>
+        <Col lg={8} md={24} sm={24} xs={24}>
+          <Space className="full-w" direction="vertical">
+            <span className="font-bold">To</span>
+            <Select
+              className="select-currency"
+              showSearch
+              value={ToCurrency}
+              style={{ width: "100%" }}
+              onChange={setToCurrency}
+            >
+              {currencies?.map((currency) => (
+                <Select.Option key={currency.key} value={currency.key}>
+                  {currency.key}
+                </Select.Option>
+              ))}
+            </Select>
+          </Space>
+        </Col>
+      </Row>
+
+      <Form.Item
+        rules={[
+          {
+            required: true,
+            message: "Enter amount to send Please",
+          },
+        ]}
+        required
+        name={"send"}
+        label="Amount to send"
       >
-        {currencyOptions.map((opt) => (
-          <Option key={opt.value} value={opt.value}>
-            {opt.label}
-          </Option>
-        ))}
-      </Select>
-      <Form.Item required label="Amount to send">
         <InputNumber
+          decimalSeparator="."
           className="input-send"
-          // formatter={(value) =>
-          //   `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-          // }
+          formatter={(value) =>
+            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          }
           placeholder="Enter Amount to send "
-          type="number"
-          formTarget={currencyFormatter(currency)}
-          parser={currencyParser}
+          parser={(value) =>
+            value?.replace(/\$\s?|(,*)/g, "") as unknown as number
+          }
+          // formTarget={currencyFormatter(currency)}
+          // parser={currencyParser}
         />
       </Form.Item>
-      <Form.Item label="Amount to recive">
-        <InputNumber placeholder="Amount to recive" type="number" />
+      <Form.Item label="Amount to receive" name={"receive"}>
+        <Input
+          className="input-send"
+          placeholder="Amount to receive"
+          readOnly
+        />
       </Form.Item>
       <Button
-        type="default"
+        type="primary"
         onClick={() => {
-          form.submit();
+          form.validateFields().then(() => {
+            form.submit();
+          });
         }}
       >
         CONFIRM SWAP

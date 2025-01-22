@@ -1,6 +1,17 @@
 .main-form {
-  width: 100vw;
+  width: 100%;
+  height: calc(100%);
+  border: 1px solid rgb(224, 224, 224);
+  border-radius: 8px;
+  margin: 15px 0px 15px 0px;
+  padding: 0px 12px 0px 12px;
+  max-width: 50vw;
+  // background-color: aliceblue;
 }
 .input-send {
   width: 100%;
+}
+.select-currency.ant-select-outlined:not(.ant-select-customize-input)
+  .ant-select-selector {
+  background: #d1cfcf;
 }
