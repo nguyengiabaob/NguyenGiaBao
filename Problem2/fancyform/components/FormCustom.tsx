@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Col,
@@ -23,8 +23,6 @@ const FormCustom = () => {
   const [currencies, setCurrencies] = useState<ObjValue[]>([]);
   const [fromCurrency, setFromCurrency] = useState<string>("USD");
   const [ToCurrency, setToCurrency] = useState<string>("USD");
-  const [amountRecive, setAmountRecive] = useState<string>();
-  // const validateForm = () => {};
   const onFinish = (value: ResultForm) => {
     message.loading({
       content: "Loading...",
@@ -46,11 +44,6 @@ const FormCustom = () => {
   const swapCurrency = (from: string, to: string, amount: number) => {
     try {
       if (from === to) {
-        console.log(
-          "Dsadsad",
-          amount.toString()?.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        );
-
         form.setFieldValue(
           "receive",
           amount.toString()?.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -67,8 +60,6 @@ const FormCustom = () => {
               .replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
             " " +
             to;
-          // setAmountRecive(convertedAmount);
-          console.log("dsadsad", convertedAmount);
 
           form.setFieldValue("receive", convertedAmount);
           message.destroy();
@@ -76,6 +67,7 @@ const FormCustom = () => {
         });
     } catch (error) {
       message.destroy();
+      console.log(error);
       message.error({
         content: "Error , Try do it again",
       });
@@ -94,22 +86,19 @@ const FormCustom = () => {
       form={form}
       onValuesChange={(changedValues: ResultForm, values: ResultForm) => {
         if (!values.send) form.setFieldValue("receive", "");
-        // if (changedValues.send )
-        // console.log(changedValues, values);
       }}
       title="Swap"
     >
-      <h1>Swap</h1>
+      <p className="title-form">Swap</p>
 
       <Row style={{ marginBottom: 8, rowGap: 8 }}>
         <Col lg={8} md={24} sm={24} xs={24}>
           <Space className="full-w" direction="vertical">
             <span className="font-bold">From</span>
             <Select
-              className="select-currency"
+              className="select-currency full-w"
               showSearch
               value={fromCurrency}
-              style={{ width: "100%" }}
               onChange={setFromCurrency}
             >
               {currencies?.map((currency) => (
@@ -134,10 +123,9 @@ const FormCustom = () => {
           <Space className="full-w" direction="vertical">
             <span className="font-bold">To</span>
             <Select
-              className="select-currency"
+              className="select-currency full-w"
               showSearch
               value={ToCurrency}
-              style={{ width: "100%" }}
               onChange={setToCurrency}
             >
               {currencies?.map((currency) => (
@@ -153,8 +141,9 @@ const FormCustom = () => {
       <Form.Item
         rules={[
           {
+            type: "number",
             required: true,
-            message: "Enter amount to send Please",
+            message: "Please enter number",
           },
         ]}
         required
@@ -167,12 +156,8 @@ const FormCustom = () => {
           formatter={(value) =>
             `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
           }
+          min={1}
           placeholder="Enter Amount to send "
-          parser={(value) =>
-            value?.replace(/\$\s?|(,*)/g, "") as unknown as number
-          }
-          // formTarget={currencyFormatter(currency)}
-          // parser={currencyParser}
         />
       </Form.Item>
       <Form.Item label="Amount to receive" name={"receive"}>
